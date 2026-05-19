@@ -42,7 +42,7 @@
             margin-bottom: 5px;
             font-size: 14px;
         }
-        select, input[type="text"], input[type="date"], input[type="number"] {
+        select, input[type="text"], input[type="date"] {
             padding: 10px;
             border: 1px solid #ccc;
             border-radius: 4px;
@@ -145,7 +145,6 @@
 <div class="container">
     <h2>Relatório de Inadimplentes</h2>
 
-    <!-- Cabeçalho -->
     <div class="form-group">
         <div class="form-control">
             <label for="empresa">Empresa:</label>
@@ -177,7 +176,6 @@
     <h3>Lançar Nota</h3>
     <span class="aviso-dica">Dica: O nome do cliente é mantido após adicionar. Para lançar várias notas do mesmo cliente, basta alterar a NF, data e valor.</span>
     
-    <!-- Formulário de Lançamento -->
     <div class="form-group">
         <div class="form-control">
             <label for="cliente">Cliente:</label>
@@ -193,7 +191,7 @@
         </div>
         <div class="form-control">
             <label for="valor">Valor (R$):</label>
-            <input type="number" id="valor" step="0.01" placeholder="Ex: 444.00">
+            <input type="text" id="valor" oninput="mascararMoeda(this)" placeholder="0,00">
         </div>
         <div class="form-control checkbox-control">
             <input type="checkbox" id="avisado">
@@ -205,7 +203,6 @@
 
     <hr style="margin: 30px 0; border: 1px solid #ecf0f1;">
 
-    <!-- Lista de Lançamentos -->
     <h3>Lançamentos Atuais</h3>
     <table id="tabela-clientes">
         <thead>
@@ -219,8 +216,7 @@
             </tr>
         </thead>
         <tbody>
-            <!-- Lançamentos aparecerão aqui -->
-        </tbody>
+            </tbody>
     </table>
 
     <div style="margin-top: 20px; text-align: right;">
@@ -228,7 +224,6 @@
     </div>
 </div>
 
-<!-- Modal de Conferência e Envio -->
 <div id="modalConferencia" class="modal">
     <div class="modal-content">
         <span class="close" onclick="fecharConferencia()">&times;</span>
@@ -242,6 +237,23 @@
 <script>
     let lancamentos = [];
 
+    // Função de máscara em tempo real para o padrão Real R$ (1.245,00)
+    function mascararMoeda(campo) {
+        let valor = campo.value.replace(/\D/g, ""); // Remove tudo que não for número
+        
+        if (valor === "") {
+            campo.value = "";
+            return;
+        }
+
+        // Transforma em centavos e formata
+        valor = (parseInt(valor) / 100).toFixed(2) + "";
+        valor = valor.replace(".", ","); // Troca o ponto da casa decimal por vírgula
+        valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); // Adiciona os pontos de milhar
+        
+        campo.value = valor;
+    }
+
     // Função para formatar a data de YYYY-MM-DD para DD/MM/YYYY
     function formatarData(dataISO) {
         if (!dataISO) return "";
@@ -249,9 +261,9 @@
         return `${partes[2]}/${partes[1]}/${partes[0]}`;
     }
 
-    // Função para formatar o valor para padrão brasileiro (ex: 444,00)
-    function formatarValor(valor) {
-        return parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    // Função para formatar o valor numérico interno de volta para exibição em Real
+    function formatarValorExibicao(valorNum) {
+        return valorNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
     function adicionarLancamento() {
@@ -266,11 +278,15 @@
             return;
         }
 
+        // Converte o valor mascarado (ex: "1.245,00") em um número puro do JavaScript (ex: 1245.00)
+        const valorLimpo = valorInput.value.replace(/\./g, "").replace(",", ".");
+        const valorFloat = parseFloat(valorLimpo);
+
         const novoLancamento = {
             cliente: clienteInput.value.toUpperCase().trim(),
             nf: nfInput.value,
             vencimento: vencimentoInput.value,
-            valor: valorInput.value,
+            valor: valorFloat,
             avisado: avisadoInput.checked
         };
 
@@ -302,7 +318,7 @@
                 <td><strong>${item.cliente}</strong></td>
                 <td>${item.nf}</td>
                 <td>${formatarData(item.vencimento)}</td>
-                <td>R$ ${formatarValor(item.valor)}</td>
+                <td>R$ ${formatarValorExibicao(item.valor)}</td>
                 <td>${item.avisado ? 'Sim' : 'Não'}</td>
                 <td><button class="btn-remove" onclick="removerLancamento(${index})">Remover</button></td>
             `;
@@ -331,7 +347,7 @@
             texto += `${nomeCliente}\n`;
             notas.forEach(nota => {
                 let avisoStr = nota.avisado ? ' (AVISADO)' : '';
-                texto += `NF: ${nota.nf} | Venc.: ${formatarData(nota.vencimento)} | Valor: R$ ${formatarValor(nota.valor)}${avisoStr}\n`;
+                texto += `NF: ${nota.nf} | Venc.: ${formatarData(nota.vencimento)} | Valor: R$ ${formatarValorExibicao(nota.valor)}${avisoStr}\n`;
             });
             texto += `\n`; // Espaço em branco entre um cliente e outro
         }
@@ -358,7 +374,7 @@
     function enviarWhatsApp() {
         const texto = encodeURIComponent(document.getElementById('texto-mensagem').value);
         
-        // A API do WhatsApp sem número direciona para a tela de seleção de contatos
+        // Direciona para a tela de seleção de contatos do WhatsApp
         const url = `https://api.whatsapp.com/send?text=${texto}`;
         
         window.open(url, '_blank');
