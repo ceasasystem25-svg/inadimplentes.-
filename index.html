@@ -131,6 +131,13 @@
             font-weight: bold;
             cursor: pointer;
         }
+        .aviso-dica {
+            font-size: 12px;
+            color: #7f8c8d;
+            margin-top: -15px;
+            margin-bottom: 15px;
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -167,7 +174,9 @@
         </div>
     </div>
 
-    <h3>Lançar Cliente</h3>
+    <h3>Lançar Nota</h3>
+    <span class="aviso-dica">Dica: O nome do cliente é mantido após adicionar. Para lançar várias notas do mesmo cliente, basta alterar a NF, data e valor.</span>
+    
     <!-- Formulário de Lançamento -->
     <div class="form-group">
         <div class="form-control">
@@ -179,7 +188,7 @@
             <input type="text" id="nf" placeholder="Ex: 4817">
         </div>
         <div class="form-control">
-            <label for="vencimento">Data de Vencimento:</label>
+            <label for="vencimento">Vencimento:</label>
             <input type="date" id="vencimento">
         </div>
         <div class="form-control">
@@ -226,12 +235,7 @@
         <h3>Conferência de Mensagem</h3>
         <textarea id="texto-mensagem" readonly></textarea>
         
-        <div class="form-control" style="margin-bottom: 15px;">
-            <label for="whatsapp-destino">WhatsApp de Destino (com DDD, apenas números):</label>
-            <input type="text" id="whatsapp-destino" placeholder="Ex: 5511999999999">
-        </div>
-
-        <button class="btn-success" style="width: 100%;" onclick="enviarWhatsApp()">Enviar via WhatsApp</button>
+        <button class="btn-success" style="width: 100%;" onclick="enviarWhatsApp()">Escolher Contato e Enviar no WhatsApp</button>
     </div>
 </div>
 
@@ -258,12 +262,12 @@
         const avisadoInput = document.getElementById('avisado');
 
         if (!clienteInput.value || !nfInput.value || !vencimentoInput.value || !valorInput.value) {
-            alert("Por favor, preencha todos os campos do cliente.");
+            alert("Por favor, preencha todos os campos da nota.");
             return;
         }
 
         const novoLancamento = {
-            cliente: clienteInput.value.toUpperCase(),
+            cliente: clienteInput.value.toUpperCase().trim(),
             nf: nfInput.value,
             vencimento: vencimentoInput.value,
             valor: valorInput.value,
@@ -273,13 +277,14 @@
         lancamentos.push(novoLancamento);
         atualizarTabela();
 
-        // Limpar campos para o próximo
-        clienteInput.value = '';
+        // MANTÉM O NOME DO CLIENTE e limpa apenas os dados da nota
         nfInput.value = '';
         vencimentoInput.value = '';
         valorInput.value = '';
         avisadoInput.checked = false;
-        clienteInput.focus();
+        
+        // Foca automaticamente no campo NF para digitar a próxima nota do mesmo cliente
+        nfInput.focus();
     }
 
     function removerLancamento(index) {
@@ -294,7 +299,7 @@
         lancamentos.forEach((item, index) => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${item.cliente}</td>
+                <td><strong>${item.cliente}</strong></td>
                 <td>${item.nf}</td>
                 <td>${formatarData(item.vencimento)}</td>
                 <td>R$ ${formatarValor(item.valor)}</td>
@@ -312,10 +317,24 @@
 
         let texto = `Bom dia!!\nSegue os inadimplentes da Empresa ${empresa} Banco (${banco}) ${remetente}\n\n`;
 
+        // Agrupa os lançamentos pelo nome do cliente
+        const clientesAgrupados = {};
         lancamentos.forEach(item => {
-            let avisoStr = item.avisado ? ' (AVISADO)' : '';
-            texto += `${item.cliente}\nNF: ${item.nf} | Venc.: ${formatarData(item.vencimento)} | Valor: R$ ${formatarValor(item.valor)}${avisoStr}\n\n`;
+            if (!clientesAgrupados[item.cliente]) {
+                clientesAgrupados[item.cliente] = [];
+            }
+            clientesAgrupados[item.cliente].push(item);
         });
+
+        // Monta o texto final agrupado
+        for (const [nomeCliente, notas] of Object.entries(clientesAgrupados)) {
+            texto += `${nomeCliente}\n`;
+            notas.forEach(nota => {
+                let avisoStr = nota.avisado ? ' (AVISADO)' : '';
+                texto += `NF: ${nota.nf} | Venc.: ${formatarData(nota.vencimento)} | Valor: R$ ${formatarValor(nota.valor)}${avisoStr}\n`;
+            });
+            texto += `\n`; // Espaço em branco entre um cliente e outro
+        }
 
         return texto.trim();
     }
@@ -337,23 +356,11 @@
     }
 
     function enviarWhatsApp() {
-        let numero = document.getElementById('whatsapp-destino').value;
         const texto = encodeURIComponent(document.getElementById('texto-mensagem').value);
-
-        // Remove qualquer caractere que não seja número
-        numero = numero.replace(/\D/g, '');
-
-        if (!numero) {
-            alert("Por favor, insira o número de destino.");
-            return;
-        }
-
-        // Se o usuário esqueceu o código do Brasil (55), adiciona por padrão
-        if (numero.length <= 11) {
-            numero = '55' + numero;
-        }
-
-        const url = `https://wa.me/${numero}?text=${texto}`;
+        
+        // A API do WhatsApp sem número direciona para a tela de seleção de contatos
+        const url = `https://api.whatsapp.com/send?text=${texto}`;
+        
         window.open(url, '_blank');
         fecharConferencia();
     }
