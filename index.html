@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório de Inadimplentes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h2, h3 {
+            color: #2c3e50;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .form-control {
+            flex: 1;
+            min-width: 200px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        select, input[type="text"], input[type="date"], input[type="number"] {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .checkbox-control {
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            margin-top: 25px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .btn-success {
+            background-color: #27ae60;
+        }
+        .btn-success:hover {
+            background-color: #2ecc71;
+        }
+        .btn-remove {
+            background-color: #e74c3c;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .btn-remove:hover {
+            background-color: #c0392b;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background-color: #f8f9fa;
+        }
+        /* Modal (Pop-up) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+        }
+        .modal-content textarea {
+            width: 100%;
+            height: 250px;
+            padding: 10px;
+            box-sizing: border-box;
+            margin-bottom: 15px;
+            font-family: monospace;
+            resize: none;
+        }
+        .close {
+            float: right;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Relatório de Inadimplentes</h2>
+
+    <!-- Cabeçalho -->
+    <div class="form-group">
+        <div class="form-control">
+            <label for="empresa">Empresa:</label>
+            <select id="empresa">
+                <option value="MARCO ANTÔNIO">MARCO ANTÔNIO</option>
+                <option value="COLMÉIA">COLMÉIA</option>
+            </select>
+        </div>
+        <div class="form-control">
+            <label for="banco">Banco:</label>
+            <select id="banco">
+                <option value="Bolecode Itaú">Bolecode Itaú</option>
+                <option value="Itaú">Itaú</option>
+                <option value="Santander">Santander</option>
+                <option value="Bradesco">Bradesco</option>
+                <option value="Caixa Econômica">Caixa Econômica</option>
+                <option value="Sicoob">Sicoob</option>
+            </select>
+        </div>
+        <div class="form-control">
+            <label for="remetente">Remetente:</label>
+            <select id="remetente">
+                <option value="ÉRICA">ÉRICA</option>
+                <option value="ISABELA">ISABELA</option>
+            </select>
+        </div>
+    </div>
+
+    <h3>Lançar Cliente</h3>
+    <!-- Formulário de Lançamento -->
+    <div class="form-group">
+        <div class="form-control">
+            <label for="cliente">Cliente:</label>
+            <input type="text" id="cliente" placeholder="Nome do Cliente">
+        </div>
+        <div class="form-control">
+            <label for="nf">Nº da NF:</label>
+            <input type="text" id="nf" placeholder="Ex: 4817">
+        </div>
+        <div class="form-control">
+            <label for="vencimento">Data de Vencimento:</label>
+            <input type="date" id="vencimento">
+        </div>
+        <div class="form-control">
+            <label for="valor">Valor (R$):</label>
+            <input type="number" id="valor" step="0.01" placeholder="Ex: 444.00">
+        </div>
+        <div class="form-control checkbox-control">
+            <input type="checkbox" id="avisado">
+            <label for="avisado" style="margin:0;">Avisado?</label>
+        </div>
+    </div>
+    
+    <button onclick="adicionarLancamento()">Adicionar Lançamento</button>
+
+    <hr style="margin: 30px 0; border: 1px solid #ecf0f1;">
+
+    <!-- Lista de Lançamentos -->
+    <h3>Lançamentos Atuais</h3>
+    <table id="tabela-clientes">
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>NF</th>
+                <th>Vencimento</th>
+                <th>Valor (R$)</th>
+                <th>Avisado</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Lançamentos aparecerão aqui -->
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px; text-align: right;">
+        <button class="btn-success" onclick="abrirConferencia()">Finalizar e Enviar</button>
+    </div>
+</div>
+
+<!-- Modal de Conferência e Envio -->
+<div id="modalConferencia" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="fecharConferencia()">&times;</span>
+        <h3>Conferência de Mensagem</h3>
+        <textarea id="texto-mensagem" readonly></textarea>
+        
+        <div class="form-control" style="margin-bottom: 15px;">
+            <label for="whatsapp-destino">WhatsApp de Destino (com DDD, apenas números):</label>
+            <input type="text" id="whatsapp-destino" placeholder="Ex: 5511999999999">
+        </div>
+
+        <button class="btn-success" style="width: 100%;" onclick="enviarWhatsApp()">Enviar via WhatsApp</button>
+    </div>
+</div>
+
+<script>
+    let lancamentos = [];
+
+    // Função para formatar a data de YYYY-MM-DD para DD/MM/YYYY
+    function formatarData(dataISO) {
+        if (!dataISO) return "";
+        const partes = dataISO.split('-');
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    // Função para formatar o valor para padrão brasileiro (ex: 444,00)
+    function formatarValor(valor) {
+        return parseFloat(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function adicionarLancamento() {
+        const clienteInput = document.getElementById('cliente');
+        const nfInput = document.getElementById('nf');
+        const vencimentoInput = document.getElementById('vencimento');
+        const valorInput = document.getElementById('valor');
+        const avisadoInput = document.getElementById('avisado');
+
+        if (!clienteInput.value || !nfInput.value || !vencimentoInput.value || !valorInput.value) {
+            alert("Por favor, preencha todos os campos do cliente.");
+            return;
+        }
+
+        const novoLancamento = {
+            cliente: clienteInput.value.toUpperCase(),
+            nf: nfInput.value,
+            vencimento: vencimentoInput.value,
+            valor: valorInput.value,
+            avisado: avisadoInput.checked
+        };
+
+        lancamentos.push(novoLancamento);
+        atualizarTabela();
+
+        // Limpar campos para o próximo
+        clienteInput.value = '';
+        nfInput.value = '';
+        vencimentoInput.value = '';
+        valorInput.value = '';
+        avisadoInput.checked = false;
+        clienteInput.focus();
+    }
+
+    function removerLancamento(index) {
+        lancamentos.splice(index, 1);
+        atualizarTabela();
+    }
+
+    function atualizarTabela() {
+        const tbody = document.querySelector('#tabela-clientes tbody');
+        tbody.innerHTML = '';
+
+        lancamentos.forEach((item, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${item.cliente}</td>
+                <td>${item.nf}</td>
+                <td>${formatarData(item.vencimento)}</td>
+                <td>R$ ${formatarValor(item.valor)}</td>
+                <td>${item.avisado ? 'Sim' : 'Não'}</td>
+                <td><button class="btn-remove" onclick="removerLancamento(${index})">Remover</button></td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function gerarTextoMensagem() {
+        const empresa = document.getElementById('empresa').value;
+        const banco = document.getElementById('banco').value;
+        const remetente = document.getElementById('remetente').value;
+
+        let texto = `Bom dia!!\nSegue os inadimplentes da Empresa ${empresa} Banco (${banco}) ${remetente}\n\n`;
+
+        lancamentos.forEach(item => {
+            let avisoStr = item.avisado ? ' (AVISADO)' : '';
+            texto += `${item.cliente}\nNF: ${item.nf} | Venc.: ${formatarData(item.vencimento)} | Valor: R$ ${formatarValor(item.valor)}${avisoStr}\n\n`;
+        });
+
+        return texto.trim();
+    }
+
+    function abrirConferencia() {
+        if (lancamentos.length === 0) {
+            alert("Adicione pelo menos um lançamento antes de enviar.");
+            return;
+        }
+        
+        const textoArea = document.getElementById('texto-mensagem');
+        textoArea.value = gerarTextoMensagem();
+        
+        document.getElementById('modalConferencia').style.display = 'flex';
+    }
+
+    function fecharConferencia() {
+        document.getElementById('modalConferencia').style.display = 'none';
+    }
+
+    function enviarWhatsApp() {
+        let numero = document.getElementById('whatsapp-destino').value;
+        const texto = encodeURIComponent(document.getElementById('texto-mensagem').value);
+
+        // Remove qualquer caractere que não seja número
+        numero = numero.replace(/\D/g, '');
+
+        if (!numero) {
+            alert("Por favor, insira o número de destino.");
+            return;
+        }
+
+        // Se o usuário esqueceu o código do Brasil (55), adiciona por padrão
+        if (numero.length <= 11) {
+            numero = '55' + numero;
+        }
+
+        const url = `https://wa.me/${numero}?text=${texto}`;
+        window.open(url, '_blank');
+        fecharConferencia();
+    }
+</script>
+
+</body>
+</html>
