@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório de Inadimplentes</title>
+    
+    <!-- Configuração para o ícone da aba do navegador e atalhos (Android e Desktop) -->
+    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="shortcut icon" href="logo.png">
+    
+    <!-- Configuração para o ícone de atalho na tela inicial do iPhone/iPad (iOS) -->
+    <link rel="apple-touch-icon" href="logo.png">
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,6 +27,15 @@
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .header-logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header-logo img {
+            max-height: 80px;
+            border-radius: 8px;
+            object-fit: contain;
         }
         h2, h3 {
             color: #2c3e50;
@@ -143,8 +160,14 @@
 <body>
 
 <div class="container">
+    <!-- Espaço para a logo da empresa -->
+    <div class="header-logo">
+        <img src="logo.png" alt="Logo da Empresa" onerror="this.style.display='none'">
+    </div>
+
     <h2>Relatório de Inadimplentes</h2>
 
+    <!-- Cabeçalho -->
     <div class="form-group">
         <div class="form-control">
             <label for="empresa">Empresa:</label>
@@ -174,24 +197,25 @@
     </div>
 
     <h3>Lançar Nota</h3>
-    <span class="aviso-dica">Dica: O nome do cliente é mantido após adicionar. Para lançar várias notas do mesmo cliente, basta alterar a NF, data e valor.</span>
+    <span class="aviso-dica">Dica: Aperte ENTER em qualquer campo para lançar rapidamente. O nome do cliente será mantido.</span>
     
+    <!-- Formulário de Lançamento -->
     <div class="form-group">
         <div class="form-control">
             <label for="cliente">Cliente:</label>
-            <input type="text" id="cliente" placeholder="Nome do Cliente">
+            <input type="text" id="cliente" placeholder="Nome do Cliente" onkeydown="verificarEnter(event)">
         </div>
         <div class="form-control">
             <label for="nf">Nº da NF:</label>
-            <input type="text" id="nf" placeholder="Ex: 4817">
+            <input type="text" id="nf" placeholder="Ex: 4817" onkeydown="verificarEnter(event)">
         </div>
         <div class="form-control">
             <label for="vencimento">Vencimento:</label>
-            <input type="date" id="vencimento">
+            <input type="date" id="vencimento" onkeydown="verificarEnter(event)">
         </div>
         <div class="form-control">
             <label for="valor">Valor (R$):</label>
-            <input type="text" id="valor" oninput="mascararMoeda(this)" placeholder="0,00">
+            <input type="text" id="valor" oninput="mascararMoeda(this)" onkeydown="verificarEnter(event)" placeholder="0,00">
         </div>
         <div class="form-control checkbox-control">
             <input type="checkbox" id="avisado">
@@ -203,6 +227,7 @@
 
     <hr style="margin: 30px 0; border: 1px solid #ecf0f1;">
 
+    <!-- Lista de Lançamentos -->
     <h3>Lançamentos Atuais</h3>
     <table id="tabela-clientes">
         <thead>
@@ -216,7 +241,8 @@
             </tr>
         </thead>
         <tbody>
-            </tbody>
+            <!-- Lançamentos aparecerão aqui -->
+        </tbody>
     </table>
 
     <div style="margin-top: 20px; text-align: right;">
@@ -224,6 +250,7 @@
     </div>
 </div>
 
+<!-- Modal de Conferência e Envio -->
 <div id="modalConferencia" class="modal">
     <div class="modal-content">
         <span class="close" onclick="fecharConferencia()">&times;</span>
@@ -236,6 +263,13 @@
 
 <script>
     let lancamentos = [];
+
+    // Função que verifica se a tecla pressionada foi o ENTER
+    function verificarEnter(event) {
+        if (event.key === 'Enter') {
+            adicionarLancamento();
+        }
+    }
 
     // Função de máscara em tempo real para o padrão Real R$ (1.245,00)
     function mascararMoeda(campo) {
