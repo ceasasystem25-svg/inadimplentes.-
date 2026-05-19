@@ -2,16 +2,20 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Relatório de Inadimplentes</title>
     
-    <!-- Configuração para o ícone da aba do navegador e atalhos (Android e Desktop) -->
-    <link rel="icon" type="image/png" href="https://icon-icons.com/pt/icone/pagamento/176381">
-    <link rel="shortcut icon" href="https://icon-icons.com/pt/icone/pagamento/176381">
+    <!-- Configurações para celular reconhecer como Aplicativo -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#3498db">
     
-    <!-- Configuração para o ícone de atalho na tela inicial do iPhone/iPad (iOS) -->
-    <link rel="apple-touch-icon" href="logo.png">
+    <!-- Ícone Padrão Embutido (Recibo 🧾) que funciona sem precisar de imagem extra -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧾</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧾</text></svg>">
 
+    <!-- COLOQUE O LINK DA SUA LOGO AQUI DENTRO DO (src="") SE QUISER QUE ELA APAREÇA NO TOPO DO SISTEMA -->
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -41,6 +45,7 @@
             color: #2c3e50;
             border-bottom: 2px solid #ecf0f1;
             padding-bottom: 10px;
+            margin-top: 0;
         }
         .form-group {
             display: flex;
@@ -87,6 +92,7 @@
         }
         .btn-success {
             background-color: #27ae60;
+            width: 100%;
         }
         .btn-success:hover {
             background-color: #2ecc71;
@@ -155,14 +161,19 @@
             margin-bottom: 15px;
             display: block;
         }
+        /* Responsividade para celular */
+        @media (max-width: 600px) {
+            th, td { font-size: 12px; padding: 5px; }
+            button { font-size: 14px; padding: 8px 15px; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Espaço para a logo da empresa -->
+    <!-- Se quiser sua logo aqui dentro do sistema, coloque o link da imagem substituindo o '#' -->
     <div class="header-logo">
-        <img src="logo.png" alt="Logo da Empresa" onerror="this.style.display='none'">
+        <img src="#" alt="Logo da Empresa" onerror="this.style.display='none'">
     </div>
 
     <h2>Relatório de Inadimplentes</h2>
@@ -228,24 +239,25 @@
     <hr style="margin: 30px 0; border: 1px solid #ecf0f1;">
 
     <!-- Lista de Lançamentos -->
-    <h3>Lançamentos Atuais</h3>
-    <table id="tabela-clientes">
-        <thead>
-            <tr>
-                <th>Cliente</th>
-                <th>NF</th>
-                <th>Vencimento</th>
-                <th>Valor (R$)</th>
-                <th>Avisado</th>
-                <th>Ação</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Lançamentos aparecerão aqui -->
-        </tbody>
-    </table>
+    <div style="overflow-x:auto;">
+        <table id="tabela-clientes">
+            <thead>
+                <tr>
+                    <th>Cliente</th>
+                    <th>NF</th>
+                    <th>Vencimento</th>
+                    <th>Valor (R$)</th>
+                    <th>Aviso</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Lançamentos aparecerão aqui -->
+            </tbody>
+        </table>
+    </div>
 
-    <div style="margin-top: 20px; text-align: right;">
+    <div style="margin-top: 20px;">
         <button class="btn-success" onclick="abrirConferencia()">Finalizar e Enviar</button>
     </div>
 </div>
@@ -257,45 +269,37 @@
         <h3>Conferência de Mensagem</h3>
         <textarea id="texto-mensagem" readonly></textarea>
         
-        <button class="btn-success" style="width: 100%;" onclick="enviarWhatsApp()">Escolher Contato e Enviar no WhatsApp</button>
+        <button class="btn-success" onclick="enviarWhatsApp()">Escolher Contato e Enviar no WhatsApp</button>
     </div>
 </div>
 
 <script>
     let lancamentos = [];
 
-    // Função que verifica se a tecla pressionada foi o ENTER
     function verificarEnter(event) {
         if (event.key === 'Enter') {
             adicionarLancamento();
         }
     }
 
-    // Função de máscara em tempo real para o padrão Real R$ (1.245,00)
     function mascararMoeda(campo) {
-        let valor = campo.value.replace(/\D/g, ""); // Remove tudo que não for número
-        
+        let valor = campo.value.replace(/\D/g, ""); 
         if (valor === "") {
             campo.value = "";
             return;
         }
-
-        // Transforma em centavos e formata
         valor = (parseInt(valor) / 100).toFixed(2) + "";
-        valor = valor.replace(".", ","); // Troca o ponto da casa decimal por vírgula
-        valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); // Adiciona os pontos de milhar
-        
+        valor = valor.replace(".", ","); 
+        valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1."); 
         campo.value = valor;
     }
 
-    // Função para formatar a data de YYYY-MM-DD para DD/MM/YYYY
     function formatarData(dataISO) {
         if (!dataISO) return "";
         const partes = dataISO.split('-');
         return `${partes[2]}/${partes[1]}/${partes[0]}`;
     }
 
-    // Função para formatar o valor numérico interno de volta para exibição em Real
     function formatarValorExibicao(valorNum) {
         return valorNum.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
@@ -312,7 +316,6 @@
             return;
         }
 
-        // Converte o valor mascarado (ex: "1.245,00") em um número puro do JavaScript (ex: 1245.00)
         const valorLimpo = valorInput.value.replace(/\./g, "").replace(",", ".");
         const valorFloat = parseFloat(valorLimpo);
 
@@ -327,13 +330,11 @@
         lancamentos.push(novoLancamento);
         atualizarTabela();
 
-        // MANTÉM O NOME DO CLIENTE e limpa apenas os dados da nota
         nfInput.value = '';
         vencimentoInput.value = '';
         valorInput.value = '';
         avisadoInput.checked = false;
         
-        // Foca automaticamente no campo NF para digitar a próxima nota do mesmo cliente
         nfInput.focus();
     }
 
@@ -367,7 +368,6 @@
 
         let texto = `Bom dia!!\nSegue os inadimplentes da Empresa ${empresa} Banco (${banco}) ${remetente}\n\n`;
 
-        // Agrupa os lançamentos pelo nome do cliente
         const clientesAgrupados = {};
         lancamentos.forEach(item => {
             if (!clientesAgrupados[item.cliente]) {
@@ -376,14 +376,13 @@
             clientesAgrupados[item.cliente].push(item);
         });
 
-        // Monta o texto final agrupado
         for (const [nomeCliente, notas] of Object.entries(clientesAgrupados)) {
             texto += `${nomeCliente}\n`;
             notas.forEach(nota => {
                 let avisoStr = nota.avisado ? ' (AVISADO)' : '';
                 texto += `NF: ${nota.nf} | Venc.: ${formatarData(nota.vencimento)} | Valor: R$ ${formatarValorExibicao(nota.valor)}${avisoStr}\n`;
             });
-            texto += `\n`; // Espaço em branco entre um cliente e outro
+            texto += `\n`; 
         }
 
         return texto.trim();
@@ -394,10 +393,8 @@
             alert("Adicione pelo menos um lançamento antes de enviar.");
             return;
         }
-        
         const textoArea = document.getElementById('texto-mensagem');
         textoArea.value = gerarTextoMensagem();
-        
         document.getElementById('modalConferencia').style.display = 'flex';
     }
 
@@ -407,10 +404,7 @@
 
     function enviarWhatsApp() {
         const texto = encodeURIComponent(document.getElementById('texto-mensagem').value);
-        
-        // Direciona para a tela de seleção de contatos do WhatsApp
         const url = `https://api.whatsapp.com/send?text=${texto}`;
-        
         window.open(url, '_blank');
         fecharConferencia();
     }
